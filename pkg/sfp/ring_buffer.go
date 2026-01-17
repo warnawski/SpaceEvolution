@@ -1,7 +1,6 @@
 package sfp
 
 import (
-	"log"
 	"sync"
 )
 
@@ -35,7 +34,6 @@ func (rb *RingBuffer) Tail() int {
 
 func (rb *RingBuffer) Push(buff []byte) {
 	rb.mu.Lock()
-	defer rb.mu.Unlock()
 
 	if rb.size == rb.capacity {
 
@@ -49,15 +47,14 @@ func (rb *RingBuffer) Push(buff []byte) {
 	rb.Buff[rb.tail] = buff
 
 	rb.tail = (rb.tail + 1) % rb.capacity
-	log.Printf("tail: %d\n", rb.tail)
-	log.Printf("head: %d\n", rb.head)
+	rb.mu.Unlock()
 }
 
 func (rb *RingBuffer) Pop() []byte {
 	rb.mu.Lock()
-	defer rb.mu.Unlock()
 
 	if rb.size == 0 {
+		rb.mu.Unlock()
 		return nil
 	}
 
@@ -65,5 +62,6 @@ func (rb *RingBuffer) Pop() []byte {
 	rb.head = (rb.head + 1) % rb.capacity
 	rb.size--
 
+	rb.mu.Unlock()
 	return data
 }
